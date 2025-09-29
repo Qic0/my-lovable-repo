@@ -202,42 +202,47 @@ const WorkerDashboard = () => {
                           </Badge>
                         </div>
                       </div>
-                      <div className="mt-4">
-                        {(() => {
-                          const timeLeft = calculateTimeRemaining(task.due_date);
-                          return (
-                            <div className={`text-center py-4 rounded-lg ${timeLeft.isOverdue ? 'bg-destructive/10 animate-pulse' : 'bg-primary/10 animate-pulse'}`}>
-                              <div className="text-sm text-muted-foreground mb-1">Осталось времени</div>
-                              <div className={`font-display font-bold text-4xl ${timeLeft.isOverdue ? 'text-destructive' : 'text-primary'}`}>
-                                {String(timeLeft.hours).padStart(2, '0')}:
-                                {String(timeLeft.minutes).padStart(2, '0')}:
-                                {String(timeLeft.seconds).padStart(2, '0')}
-                              </div>
-                            </div>
-                          );
-                        })()}
-                      </div>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
                         <p className="text-muted-foreground">{task.description}</p>
                         
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-4 w-4" />
-                            Срок: {formatTime(task.due_date)}
-                          </div>
-                        </div>
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 space-y-4">
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <Calendar className="h-4 w-4" />
+                                Срок: {formatTime(task.due_date)}
+                              </div>
+                            </div>
 
-                        <div className="flex items-center gap-2">
-                          <Button onClick={() => setSelectedTask(task)} className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4" />
-                            Завершить задачу
-                          </Button>
-                          
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <Camera className="h-4 w-4" />
-                            Требуется фото
+                            <div className="flex items-center gap-2">
+                              <Button onClick={() => setSelectedTask(task)} className="flex items-center gap-2">
+                                <CheckCircle className="h-4 w-4" />
+                                Завершить задачу
+                              </Button>
+                              
+                              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                <Camera className="h-4 w-4" />
+                                Требуется фото
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex-shrink-0">
+                            {(() => {
+                              const timeLeft = calculateTimeRemaining(task.due_date);
+                              return (
+                                <div className={`text-center py-4 px-6 rounded-lg ${timeLeft.isOverdue ? 'bg-destructive/10 animate-pulse' : 'bg-primary/10 animate-pulse'}`}>
+                                  <div className="text-xs text-muted-foreground mb-1">Осталось</div>
+                                  <div className={`font-display font-bold text-3xl ${timeLeft.isOverdue ? 'text-destructive' : 'text-primary'}`}>
+                                    {String(timeLeft.hours).padStart(2, '0')}:
+                                    {String(timeLeft.minutes).padStart(2, '0')}:
+                                    {String(timeLeft.seconds).padStart(2, '0')}
+                                  </div>
+                                </div>
+                              );
+                            })()}
                           </div>
                         </div>
                       </div>
