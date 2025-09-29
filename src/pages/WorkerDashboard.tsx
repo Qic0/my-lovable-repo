@@ -233,9 +233,9 @@ const WorkerDashboard = () => {
                             {(() => {
                               const timeLeft = calculateTimeRemaining(task.due_date);
                               return (
-                                <div className={`text-center py-4 px-6 rounded-lg ${timeLeft.isOverdue ? 'bg-destructive/10 animate-pulse' : 'bg-primary/10 animate-pulse'}`}>
-                                  <div className="text-xs text-muted-foreground mb-1">Осталось</div>
-                                  <div className={`font-display font-bold text-3xl ${timeLeft.isOverdue ? 'text-destructive' : 'text-primary'}`}>
+                                <div className={`text-center py-6 px-8 rounded-lg ${timeLeft.isOverdue ? 'bg-destructive/10 animate-pulse' : 'bg-primary/10 animate-pulse'}`}>
+                                  <div className="text-sm text-muted-foreground mb-2">Осталось</div>
+                                  <div className={`font-display font-bold text-5xl ${timeLeft.isOverdue ? 'text-destructive' : 'text-primary'}`}>
                                     {String(timeLeft.hours).padStart(2, '0')}:
                                     {String(timeLeft.minutes).padStart(2, '0')}:
                                     {String(timeLeft.seconds).padStart(2, '0')}
