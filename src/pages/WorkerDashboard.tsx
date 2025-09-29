@@ -4,17 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { 
-  Clock, 
-  DollarSign, 
-  CheckCircle, 
-  Camera,
-  AlertCircle,
-  Calendar,
-  User,
-  Award,
-  FileText
-} from 'lucide-react';
+import { Clock, DollarSign, CheckCircle, Camera, AlertCircle, Calendar, User, Award, FileText } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
@@ -22,54 +12,50 @@ import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import TaskCompletionDialog from '@/components/TaskCompletionDialog';
 import UserHeader from '@/components/UserHeader';
-
 type Task = Database['public']['Tables']['zadachi']['Row'];
-
 const WorkerDashboard = () => {
-  const { user, isUserOnline } = useAuth();
-  const { toast } = useToast();
+  const {
+    user,
+    isUserOnline
+  } = useAuth();
+  const {
+    toast
+  } = useToast();
   const [currentTasks, setCurrentTasks] = useState<Task[]>([]);
   const [completedTasks, setCompletedTasks] = useState<Task[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Получаем данные пользователя из базы
-  const { data: userData } = useQuery({
+  const {
+    data: userData
+  } = useQuery({
     queryKey: ['worker-user-data', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      
-      const { data, error } = await supabase
-        .from('users')
-        .select('salary, completed_tasks')
-        .eq('uuid_user', user.id)
-        .single();
-      
+      const {
+        data,
+        error
+      } = await supabase.from('users').select('salary, completed_tasks').eq('uuid_user', user.id).single();
       if (error) {
         console.error('Error fetching user data:', error);
         return null;
       }
-      
       return data;
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id
   });
-
   useEffect(() => {
     if (user) {
       fetchTasks();
     }
   }, [user]);
-
   const fetchTasks = async () => {
     if (!user) return;
-
     try {
-      const { data: tasks } = await supabase
-        .from('zadachi')
-        .select('*')
-        .eq('responsible_user_id', user.id);
-
+      const {
+        data: tasks
+      } = await supabase.from('zadachi').select('*').eq('responsible_user_id', user.id);
       if (tasks) {
         setCurrentTasks(tasks.filter(t => t.status !== 'completed'));
         setCompletedTasks(tasks.filter(t => t.status === 'completed'));
@@ -80,25 +66,18 @@ const WorkerDashboard = () => {
       setLoading(false);
     }
   };
-
   const formatTime = (date: string) => {
     return new Date(date).toLocaleString('ru-RU');
   };
-
   const calculateEarnings = (tasks: Task[]) => {
     return tasks.reduce((sum, task) => sum + (task.salary || 0), 0);
   };
-
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+    return <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen bg-background pt-14">
+  return <div className="min-h-screen bg-background pt-14">
       <div className="container mx-auto px-4 py-6">
         {/* Welcome Section */}
         <div className="mb-6">
@@ -111,11 +90,7 @@ const WorkerDashboard = () => {
                 </AvatarFallback>
               </Avatar>
               {/* Онлайн индикатор */}
-              <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white ${
-                user?.id && isUserOnline(user.id) 
-                  ? 'bg-green-500' 
-                  : 'bg-gray-400'
-              }`} />
+              <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white ${user?.id && isUserOnline(user.id) ? 'bg-green-500' : 'bg-gray-400'}`} />
             </div>
             <div>
               <h2 className="text-2xl font-bold">{user?.full_name || user?.email}</h2>
@@ -157,7 +132,7 @@ const WorkerDashboard = () => {
                 <div className="flex items-center gap-2">
                   <DollarSign className="h-5 w-5 text-yellow-500" />
                   <div>
-                    <p className="text-sm text-muted-foreground">К получению</p>
+                    <p className="text-sm text-muted-foreground">Заказы в работе</p>
                     <p className="text-2xl font-bold">{calculateEarnings(currentTasks)} ₽</p>
                   </div>
                 </div>
@@ -187,15 +162,11 @@ const WorkerDashboard = () => {
 
           <TabsContent value="current">
             <div className="grid gap-4">
-              {currentTasks.length === 0 ? (
-                <Card>
+              {currentTasks.length === 0 ? <Card>
                   <CardContent className="p-8 text-center">
                     <p className="text-muted-foreground">У вас нет активных задач</p>
                   </CardContent>
-                </Card>
-              ) : (
-                currentTasks.map((task) => (
-                  <Card key={task.uuid_zadachi} className="hover:shadow-md transition-shadow">
+                </Card> : currentTasks.map(task => <Card key={task.uuid_zadachi} className="hover:shadow-md transition-shadow">
                     <CardHeader>
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-lg">{task.title}</CardTitle>
@@ -221,10 +192,7 @@ const WorkerDashboard = () => {
                         </div>
 
                         <div className="flex items-center gap-2">
-                          <Button 
-                            onClick={() => setSelectedTask(task)}
-                            className="flex items-center gap-2"
-                          >
+                          <Button onClick={() => setSelectedTask(task)} className="flex items-center gap-2">
                             <CheckCircle className="h-4 w-4" />
                             Завершить задачу
                           </Button>
@@ -236,22 +204,17 @@ const WorkerDashboard = () => {
                         </div>
                       </div>
                     </CardContent>
-                  </Card>
-                ))
-              )}
+                  </Card>)}
             </div>
           </TabsContent>
 
           <TabsContent value="completed">
             <div className="space-y-4">
-              {completedTasks.length === 0 ? (
-                <Card>
+              {completedTasks.length === 0 ? <Card>
                   <CardContent className="p-8 text-center">
                     <p className="text-muted-foreground">У вас нет выполненных задач</p>
                   </CardContent>
-                </Card>
-              ) : (
-                <Card>
+                </Card> : <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <CheckCircle className="h-5 w-5" />
@@ -260,8 +223,7 @@ const WorkerDashboard = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {completedTasks.map((task) => (
-                        <div key={task.uuid_zadachi} className="bg-card border border-card-border rounded-lg p-6 micro-lift hover:shadow-md transition-all duration-200">
+                      {completedTasks.map(task => <div key={task.uuid_zadachi} className="bg-card border border-card-border rounded-lg p-6 micro-lift hover:shadow-md transition-all duration-200">
                           <div className="flex items-start justify-between">
                             <div className="flex-1 space-y-3">
                               <div className="flex items-center gap-3">
@@ -271,32 +233,26 @@ const WorkerDashboard = () => {
                                 </span>
                               </div>
                               
-                              {task.description && (
-                                <div className="flex items-start gap-3 text-muted-foreground">
+                              {task.description && <div className="flex items-start gap-3 text-muted-foreground">
                                   <div className="w-5 h-5 flex-shrink-0 mt-0.5">
                                     <div className="w-1 h-1 bg-muted-foreground rounded-full"></div>
                                   </div>
                                   <span className="font-body text-base">{task.description}</span>
-                                </div>
-                              )}
+                                </div>}
                               
-                               {task.completed_at && (
-                                 <div className="flex items-center gap-3 text-muted-foreground">
+                               {task.completed_at && <div className="flex items-center gap-3 text-muted-foreground">
                                    <Calendar className="h-4 w-4" />
                                    <span className="font-body text-sm">
                                      Завершено: {formatTime(task.completed_at)}
                                    </span>
-                                 </div>
-                               )}
+                                 </div>}
                                
-                               {task.execution_time_seconds && (
-                                 <div className="flex items-center gap-3 text-muted-foreground">
+                               {task.execution_time_seconds && <div className="flex items-center gap-3 text-muted-foreground">
                                    <Clock className="h-4 w-4" />
                                    <span className="font-body text-sm">
-                                     Время выполнения: {Math.floor(task.execution_time_seconds / 3600)}ч {Math.floor((task.execution_time_seconds % 3600) / 60)}м
+                                     Время выполнения: {Math.floor(task.execution_time_seconds / 3600)}ч {Math.floor(task.execution_time_seconds % 3600 / 60)}м
                                    </span>
-                                 </div>
-                               )}
+                                 </div>}
                             </div>
                             
                             <div className="text-right ml-4">
@@ -305,12 +261,10 @@ const WorkerDashboard = () => {
                               </Badge>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        </div>)}
                     </div>
                   </CardContent>
-                </Card>
-              )}
+                </Card>}
             </div>
           </TabsContent>
 
@@ -365,24 +319,15 @@ const WorkerDashboard = () => {
           </TabsContent>
         </Tabs>
 
-        {selectedTask && (
-          <TaskCompletionDialog
-            task={selectedTask}
-            isOpen={!!selectedTask}
-            onClose={() => setSelectedTask(null)}
-            onComplete={() => {
-              setSelectedTask(null);
-              fetchTasks();
-              toast({
-                title: "Задача завершена",
-                description: "Задача успешно отмечена как выполненная",
-              });
-            }}
-          />
-        )}
+        {selectedTask && <TaskCompletionDialog task={selectedTask} isOpen={!!selectedTask} onClose={() => setSelectedTask(null)} onComplete={() => {
+        setSelectedTask(null);
+        fetchTasks();
+        toast({
+          title: "Задача завершена",
+          description: "Задача успешно отмечена как выполненная"
+        });
+      }} />}
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default WorkerDashboard;
