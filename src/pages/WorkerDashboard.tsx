@@ -199,11 +199,13 @@ const WorkerDashboard = () => {
                     <CardHeader>
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-lg">{task.title}</CardTitle>
-                        <div className="flex items-center gap-2">
-                          <Badge variant={task.priority === 'high' ? 'destructive' : 'secondary'}>
+                        <div className="flex items-center gap-3">
+                          <Badge variant={task.priority === 'high' ? 'destructive' : 'secondary'} className="text-base px-4 py-2">
                             {task.priority}
                           </Badge>
-                          <Badge variant="outline">{task.salary} ₽</Badge>
+                          <Badge variant="outline" className="text-3xl px-6 py-4 font-bold">
+                            {task.salary} ₽
+                          </Badge>
                         </div>
                       </div>
                     </CardHeader>
