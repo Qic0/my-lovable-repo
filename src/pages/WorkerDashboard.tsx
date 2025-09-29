@@ -51,7 +51,6 @@ const WorkerDashboard = () => {
       fetchTasks();
     }
   }, [user]);
-
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
@@ -80,20 +79,26 @@ const WorkerDashboard = () => {
   const calculateEarnings = (tasks: Task[]) => {
     return tasks.reduce((sum, task) => sum + (task.salary || 0), 0);
   };
-
   const calculateTimeRemaining = (dueDate: string) => {
     const due = new Date(dueDate);
     const diff = due.getTime() - currentTime.getTime();
-    
     if (diff <= 0) {
-      return { hours: 0, minutes: 0, seconds: 0, isOverdue: true };
+      return {
+        hours: 0,
+        minutes: 0,
+        seconds: 0,
+        isOverdue: true
+      };
     }
-    
     const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-    
-    return { hours, minutes, seconds, isOverdue: false };
+    const minutes = Math.floor(diff % (1000 * 60 * 60) / (1000 * 60));
+    const seconds = Math.floor(diff % (1000 * 60) / 1000);
+    return {
+      hours,
+      minutes,
+      seconds,
+      isOverdue: false
+    };
   };
   if (loading) {
     return <div className="min-h-screen bg-background flex items-center justify-center">
@@ -231,18 +236,16 @@ const WorkerDashboard = () => {
 
                           <div className="flex-shrink-0">
                             {(() => {
-                              const timeLeft = calculateTimeRemaining(task.due_date);
-                              return (
-                                <div className={`text-center py-6 px-8 rounded-lg ${timeLeft.isOverdue ? 'bg-destructive/10 animate-pulse' : 'bg-primary/10 animate-pulse'}`}>
-                                  <div className="text-sm text-muted-foreground mb-2">Осталось</div>
+                        const timeLeft = calculateTimeRemaining(task.due_date);
+                        return <div className={`text-center py-6 px-8 rounded-lg ${timeLeft.isOverdue ? 'bg-destructive/10 animate-pulse' : 'bg-primary/10 animate-pulse'}`}>
+                                  <div className="text-sm text-muted-foreground mb-2">Осталось времени:</div>
                                   <div className={`font-display font-bold text-5xl ${timeLeft.isOverdue ? 'text-destructive' : 'text-primary'}`}>
                                     {String(timeLeft.hours).padStart(2, '0')}:
                                     {String(timeLeft.minutes).padStart(2, '0')}:
                                     {String(timeLeft.seconds).padStart(2, '0')}
                                   </div>
-                                </div>
-                              );
-                            })()}
+                                </div>;
+                      })()}
                           </div>
                         </div>
                       </div>
