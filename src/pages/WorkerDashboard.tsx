@@ -62,7 +62,10 @@ const WorkerDashboard = () => {
     try {
       const {
         data: tasks
-      } = await supabase.from('zadachi').select('*').eq('responsible_user_id', user.id);
+      } = await supabase.from('zadachi').select(`
+        *,
+        zakazi(title, client_name)
+      `).eq('responsible_user_id', user.id);
       if (tasks) {
         setCurrentTasks(tasks.filter(t => t.status !== 'completed'));
         setCompletedTasks(tasks.filter(t => t.status === 'completed'));
@@ -198,13 +201,20 @@ const WorkerDashboard = () => {
                     <CardHeader>
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-lg">{task.title}</CardTitle>
-                        <div className="flex items-center gap-3">
-                          <Badge variant={task.priority === 'high' ? 'destructive' : 'secondary'} className="text-base px-4 py-2">
-                            {task.priority}
-                          </Badge>
-                          <Badge variant="outline" className="text-3xl px-6 py-4 font-bold">
-                            {task.salary} ₽
-                          </Badge>
+                        <div className="flex flex-col items-end gap-2">
+                          <div className="flex items-center gap-3">
+                            <Badge variant={task.priority === 'high' ? 'destructive' : 'secondary'} className="text-base px-4 py-2">
+                              {task.priority}
+                            </Badge>
+                            <Badge variant="outline" className="text-3xl px-6 py-4 font-bold">
+                              {task.salary} ₽
+                            </Badge>
+                          </div>
+                          {(task as any).zakazi && (
+                            <p className="text-sm text-muted-foreground">
+                              {(task as any).zakazi.title} ({(task as any).zakazi.client_name})
+                            </p>
+                          )}
                         </div>
                       </div>
                     </CardHeader>
