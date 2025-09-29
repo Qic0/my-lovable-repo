@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +25,7 @@ const WorkerDashboard = () => {
   const [completedTasks, setCompletedTasks] = useState<Task[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   // Получаем данные пользователя из базы
   const {
@@ -50,6 +51,13 @@ const WorkerDashboard = () => {
       fetchTasks();
     }
   }, [user]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
   const fetchTasks = async () => {
     if (!user) return;
     try {
@@ -71,6 +79,21 @@ const WorkerDashboard = () => {
   };
   const calculateEarnings = (tasks: Task[]) => {
     return tasks.reduce((sum, task) => sum + (task.salary || 0), 0);
+  };
+
+  const calculateTimeRemaining = (dueDate: string) => {
+    const due = new Date(dueDate);
+    const diff = due.getTime() - currentTime.getTime();
+    
+    if (diff <= 0) {
+      return { hours: 0, minutes: 0, seconds: 0, isOverdue: true };
+    }
+    
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    
+    return { hours, minutes, seconds, isOverdue: false };
   };
   if (loading) {
     return <div className="min-h-screen bg-background flex items-center justify-center">
@@ -178,6 +201,21 @@ const WorkerDashboard = () => {
                             {task.salary} ₽
                           </Badge>
                         </div>
+                      </div>
+                      <div className="mt-4">
+                        {(() => {
+                          const timeLeft = calculateTimeRemaining(task.due_date);
+                          return (
+                            <div className={`text-center py-4 rounded-lg ${timeLeft.isOverdue ? 'bg-destructive/10 animate-pulse' : 'bg-primary/10 animate-pulse'}`}>
+                              <div className="text-sm text-muted-foreground mb-1">Осталось времени</div>
+                              <div className={`font-display font-bold text-4xl ${timeLeft.isOverdue ? 'text-destructive' : 'text-primary'}`}>
+                                {String(timeLeft.hours).padStart(2, '0')}:
+                                {String(timeLeft.minutes).padStart(2, '0')}:
+                                {String(timeLeft.seconds).padStart(2, '0')}
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     </CardHeader>
                     <CardContent>
