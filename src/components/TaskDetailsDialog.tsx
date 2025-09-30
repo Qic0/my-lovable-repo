@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Calendar, User, FileText, Tag, CheckCircle, Clock, Building, Banknote, Camera, Timer, AlertTriangle } from "lucide-react";
+import { Calendar, User, FileText, Tag, CheckCircle, Clock, Building, Banknote, Camera, Timer, AlertTriangle, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
@@ -134,6 +134,7 @@ const TaskDetailsDialog = ({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isCompleting, setIsCompleting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   if (!task) return null;
   const handleCompleteTask = async () => {
     setIsCompleting(true);
@@ -243,6 +244,96 @@ const TaskDetailsDialog = ({
       setIsCompleting(false);
     }
   };
+
+  const handleDeleteTask = async () => {
+    if (!confirm('Вы уверены, что хотите удалить эту задачу? Это действие нельзя отменить.')) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      // 1. Если задача была завершена, вернуть зарплату пользователю
+      if (task.status === 'completed' && task.responsible_user_id && task.salary && task.salary > 0) {
+        const { data: userData, error: userFetchError } = await supabase
+          .from('users')
+          .select('salary, completed_tasks')
+          .eq('uuid_user', task.responsible_user_id)
+          .single();
+
+        if (!userFetchError && userData) {
+          const currentSalary = userData?.salary || 0;
+          const newSalary = Math.max(0, currentSalary - task.salary);
+          
+          // Удалить задачу из completed_tasks
+          const currentCompletedTasks = (userData as any)?.completed_tasks || [];
+          const updatedCompletedTasks = currentCompletedTasks.filter(
+            (t: any) => t.task_id !== task.id_zadachi
+          );
+
+          await supabase
+            .from('users')
+            .update({ 
+              salary: newSalary,
+              completed_tasks: updatedCompletedTasks
+            } as any)
+            .eq('uuid_user', task.responsible_user_id);
+        }
+      }
+
+      // 2. Удалить задачу из массива vse_zadachi в заказе
+      if (task.zakaz_id) {
+        const { data: zakazData, error: zakazFetchError } = await supabase
+          .from('zakazi')
+          .select('vse_zadachi')
+          .eq('id_zakaza', task.zakaz_id)
+          .single();
+
+        if (!zakazFetchError && zakazData) {
+          const currentTasks = zakazData?.vse_zadachi || [];
+          const updatedTasks = currentTasks.filter((id: number) => id !== task.id_zadachi);
+
+          await supabase
+            .from('zakazi')
+            .update({ vse_zadachi: updatedTasks })
+            .eq('id_zakaza', task.zakaz_id);
+        }
+      }
+
+      // 3. Удалить саму задачу
+      const { error: deleteError } = await supabase
+        .from('zadachi')
+        .delete()
+        .eq('id_zadachi', task.id_zadachi);
+
+      if (deleteError) throw deleteError;
+
+      toast({
+        title: "Задача удалена",
+        description: "Задача успешно удалена из системы."
+      });
+
+      // Инвалидировать все связанные запросы
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['workers'] });
+      queryClient.invalidateQueries({ queryKey: ['zadachi'] });
+      queryClient.invalidateQueries({ queryKey: ['zakazi'] });
+      queryClient.invalidateQueries({ queryKey: ['zakazi-kanban'] });
+      queryClient.invalidateQueries({ queryKey: ['orderTasks'] });
+      
+      onTaskUpdated?.();
+      onClose();
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      toast({
+        variant: "destructive",
+        title: "Ошибка",
+        description: "Не удалось удалить задачу. Попробуйте еще раз."
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const isCompleted = task.status === 'completed' || task.completed_at;
   return <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-[800px] max-w-[95vw] max-h-[90vh] overflow-y-auto">
@@ -380,20 +471,32 @@ const TaskDetailsDialog = ({
         </div>
 
         {/* Действия */}
-        <div className="flex justify-end space-x-3 pt-6 border-t">
-          <Button variant="outline" onClick={onClose}>
-            Закрыть
+        <div className="flex justify-between items-center pt-6 border-t">
+          <Button 
+            variant="destructive" 
+            size="sm"
+            onClick={handleDeleteTask}
+            disabled={isDeleting}
+          >
+            <Trash2 className="w-3 h-3 mr-1" />
+            {isDeleting ? "Удаление..." : "Удалить"}
           </Button>
-          {!isCompleted && (
-            <Button 
-              onClick={handleCompleteTask}
-              disabled={isCompleting}
-              className="bg-green-600 hover:bg-green-700 text-white"
-            >
-              <CheckCircle className="w-4 h-4 mr-2" />
-              {isCompleting ? "Завершение..." : "Завершить задачу"}
+          
+          <div className="flex space-x-3">
+            <Button variant="outline" onClick={onClose}>
+              Закрыть
             </Button>
-          )}
+            {!isCompleted && (
+              <Button 
+                onClick={handleCompleteTask}
+                disabled={isCompleting}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                <CheckCircle className="w-4 h-4 mr-2" />
+                {isCompleting ? "Завершение..." : "Завершить задачу"}
+              </Button>
+            )}
+          </div>
         </div>
         
       </DialogContent>
