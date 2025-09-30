@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { fromZonedTime } from "date-fns-tz";
 
 const taskSchema = z.object({
   title: z.string().trim().min(1, "Название задачи обязательно").max(255, "Название слишком длинное"),
@@ -95,6 +96,11 @@ export const CreateTaskDialog = ({ trigger, open, onOpenChange }: CreateTaskDial
 
       const nextId = lastTask ? lastTask.id_zadachi + 1 : 1;
 
+      // Convert Moscow time to UTC
+      const moscowDate = new Date(taskData.due_date);
+      const utcDate = fromZonedTime(moscowDate, 'Europe/Moscow');
+      const utcDateString = utcDate.toISOString();
+
       // Create the task with the zakaz_id foreign key
       const { data: newTask, error: taskError } = await supabase
         .from('zadachi')
@@ -104,7 +110,7 @@ export const CreateTaskDialog = ({ trigger, open, onOpenChange }: CreateTaskDial
           description: taskData.description || null,
           priority: taskData.priority,
           responsible_user_id: taskData.responsible_user_id,
-          due_date: taskData.due_date,
+          due_date: utcDateString,
           author_id: null,
           zakaz_id: parseInt(taskData.zakaz_id),
           salary: parseFloat(taskData.salary),

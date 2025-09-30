@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { AutomationSetting } from './useAutomationSettings';
+import { fromZonedTime } from 'date-fns-tz';
 
 export const useAutoTaskCreation = () => {
   // Загружаем настройки автоматизации
@@ -40,9 +41,12 @@ export const useAutoTaskCreation = () => {
       const taskTitle = stageSettings.task_title_template.replace('#{order_id}', orderNumericId.toString());
       const taskDescription = stageSettings.task_description_template + ` (Заказ: ${orderTitle})`;
 
-      // Вычисляем дату выполнения
-      const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() + stageSettings.duration_days);
+      // Вычисляем дату выполнения в московском времени
+      const moscowDate = new Date();
+      moscowDate.setDate(moscowDate.getDate() + stageSettings.duration_days);
+      
+      // Конвертируем московское время в UTC
+      const utcDate = fromZonedTime(moscowDate, 'Europe/Moscow');
 
       // Создаем задачу - получаем максимальный id_zadachi для инкремента
       const { data: maxIdData } = await supabase
@@ -61,7 +65,7 @@ export const useAutoTaskCreation = () => {
           description: taskDescription,
           responsible_user_id: stageSettings.responsible_user_id,
           zakaz_id: orderNumericId,
-          due_date: dueDate.toISOString(),
+          due_date: utcDate.toISOString(),
           salary: stageSettings.payment_amount,
           priority: 'medium',
           status: 'pending'
